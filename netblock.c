@@ -9,28 +9,35 @@ static char* PRINTER = "192.168.1.15";
 static int firewall_rule;
 static char* filelock_name = "/tmp/netblock.lock"; // /tmp/* are deleted automatically upon reboot
 
-void add_firewall_rule(void) {
+int add_firewall_rule(void) {
   srand(time(NULL));
   firewall_rule = (rand() % 32000) + 1;
   char command[100];
   sprintf(command, "sudo ipfw -q add %d deny tcp from not %s to not %s", firewall_rule, PRINTER, PRINTER);
-  system(command);
+  return !system(command);
   
 }
 
-void delete_firewall_rule(void) {
+int delete_firewall_rule(void) {
   char command[100];
   sprintf(command, "sudo ipfw -q delete %d", firewall_rule);
-  system(command);
+  return !system(command);
+
 }
 
 
 void ctrl_c_handler(int sig) {
   system("sudo -k");
   printf("\n");
-  delete_firewall_rule();
-  printf("Received SIGINT. Internet restored.\n");
-  exit(1);
+  if(delete_firewall_rule()) {
+	printf("Received SIGINT. Internet restored.\n");
+	remove(filelock_name);
+	exit(1);
+  }
+  else {
+	system("tput clear");
+	system("tput sc");
+  }
 }
 
 void ctrl_z_handler(int sig);
@@ -38,19 +45,30 @@ void sigcont_handler(int sig);
 
 
 void ctrl_z_handler(int sig) {
-  delete_firewall_rule();
-  signal(SIGTSTP, SIG_DFL);
-  signal(SIGCONT, sigcont_handler);
-  printf("\nReceived SIGTSTP. Temporarily restoring Internet.\n");
-  raise(SIGTSTP);
+  printf("\n");
+  if(delete_firewall_rule()) {
+	signal(SIGTSTP, SIG_DFL);
+	signal(SIGCONT, sigcont_handler);
+	printf("Received SIGTSTP. Temporarily restoring Internet.\n");
+	raise(SIGTSTP);
+  } else {
+	system("tput clear");
+	system("tput sc");
+  }
 }
 
 void sigcont_handler(int sig) {
-  system("clear");
-  add_firewall_rule();
-  signal(SIGTSTP, ctrl_z_handler);
-  signal(SIGCONT, SIG_DFL);
-  raise(SIGCONT);
+
+  if(add_firewall_rule()) {
+	system("clear");
+	system("tput sc");
+    signal(SIGTSTP, ctrl_z_handler);
+	signal(SIGCONT, SIG_DFL);
+	raise(SIGCONT);
+  } else {
+	system("tput clear");
+	system("tput sc");
+  }
   
 }
 
@@ -115,7 +133,11 @@ int main(int argc, char* argv[]) {
 
   time_t end_time = start_time + interval_secs;
   time_t cur_time = start_time;
-  add_firewall_rule();
+
+  if(!add_firewall_rule())
+	exit(1);
+
+  
   system("clear");
   system("tput sc");
   while(cur_time < end_time) {
