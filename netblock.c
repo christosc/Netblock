@@ -3,25 +3,25 @@
 #include <time.h>
 #include <stdlib.h>
 #include <unistd.h>
-
+#include <stdbool.h>
 
 static char* PRINTER = "192.168.1.15";
 static int firewall_rule;
 static char* filelock_name = "/tmp/netblock.lock"; // /tmp/* are deleted automatically upon reboot
 
-int add_firewall_rule(void) {
+bool add_firewall_rule(void) {
   srand(time(NULL));
   firewall_rule = (rand() % 32000) + 1;
   char command[100];
   sprintf(command, "sudo ipfw -q add %d deny tcp from not %s to not %s", firewall_rule, PRINTER, PRINTER);
-  return !system(command);
+  return (system(command) == 0); // In Unix 0 == success
   
 }
 
-int delete_firewall_rule(void) {
+bool delete_firewall_rule(void) {
   char command[100];
   sprintf(command, "sudo ipfw -q delete %d", firewall_rule);
-  return !system(command);
+  return (system(command) == 0); // In Unix 0 == success
 
 }
 
@@ -82,11 +82,11 @@ char* format_time(double total_secs, char dst[8+1]) {
 }
 
 
-int netblock_active() {
+bool netblock_active() {
   /* char command[100]; */
   /* sprintf(command, "sudo ipfw list | grep \"deny tcp from not %s to not %s\" &> /dev/null", PRINTER, PRINTER); */
   /* return !system(command);  */
-  return (fopen(filelock_name, "r") ? 1 : 0);
+  return (fopen(filelock_name, "r") ? true : false);
 
 }
 
