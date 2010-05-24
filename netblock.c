@@ -108,7 +108,7 @@ int main(int argc, char* argv[]) {
 
 
   signal(SIGTSTP, ctrl_z_handler);
-  signal(SIGCONT, sigcont_handler);
+
   signal(SIGINT, ctrl_c_handler);
 
   time_t end_time = start_time + interval_secs;
