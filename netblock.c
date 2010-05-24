@@ -7,6 +7,7 @@
 
 static char* PRINTER = "192.168.1.15";
 static int firewall_rule;
+static char* filelock_name = "/tmp/netblock.lock";
 
 void add_firewall_rule(void) {
   srand(time(NULL));
@@ -29,7 +30,6 @@ void ctrl_c_handler(int sig) {
   printf("\n");
   delete_firewall_rule();
   printf("Received SIGINT. Internet restored.\n");
-  /* fflush(stdout); */
   exit(1);
 }
 
@@ -65,9 +65,11 @@ char* format_time(double total_secs, char dst[8+1]) {
 
 
 int netblock_active() {
-  char command[100];
-  sprintf(command, "sudo ipfw list | grep \"deny tcp from not %s to not %s\" &> /dev/null", PRINTER, PRINTER);
-  return !system(command); 
+  /* char command[100]; */
+  /* sprintf(command, "sudo ipfw list | grep \"deny tcp from not %s to not %s\" &> /dev/null", PRINTER, PRINTER); */
+  /* return !system(command);  */
+  return (fopen(filelock_name, "r") ? 1 : 0);
+
 }
 
 
@@ -93,7 +95,8 @@ int main(int argc, char* argv[]) {
 	printf("netblock already active. Aborting.\n");
 	exit(1);
   }
-  
+
+  fopen(filelock_name, "w+");
   time_t start_time = time(NULL);
 
   long interval_secs;
@@ -108,7 +111,6 @@ int main(int argc, char* argv[]) {
 
 
   signal(SIGTSTP, ctrl_z_handler);
-
   signal(SIGINT, ctrl_c_handler);
 
   time_t end_time = start_time + interval_secs;
@@ -126,7 +128,7 @@ int main(int argc, char* argv[]) {
 
   print_remaining_time(0);
   printf("\nInternet connection restored.\n");
-
+  remove(filelock_name);
   return 0;
 }
 
