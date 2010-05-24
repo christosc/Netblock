@@ -7,7 +7,7 @@
 
 static char* PRINTER = "192.168.1.15";
 static int firewall_rule;
-static char* filelock_name = "/tmp/netblock.lock";
+static char* filelock_name = "/tmp/netblock.lock"; // /tmp/* are deleted automatically upon reboot
 
 void add_firewall_rule(void) {
   srand(time(NULL));
