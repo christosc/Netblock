@@ -97,7 +97,7 @@ int main(int argc, char* argv[]) {
   time_t start_time = time(NULL);
 
   long interval_secs;
-  /* fprintf(stderr, "In l.49\n"); */
+
   if (argc == 1)
 	interval_secs = 8*60*60;
   else {
@@ -106,21 +106,19 @@ int main(int argc, char* argv[]) {
 	interval_secs = interval*60*60;
   }
 
-  /* fprintf(stderr, "In l.58\n"); */
-  /* printf("To stdout"); */
-  /* fflush(stdout); */
+
   signal(SIGTSTP, ctrl_z_handler);
   signal(SIGCONT, sigcont_handler);
   signal(SIGINT, ctrl_c_handler);
-  /* fprintf(stderr, "In l.61\n"); */
+
   time_t end_time = start_time + interval_secs;
   time_t cur_time = start_time;
   add_firewall_rule();
   system("clear");
   system("tput sc");
   while(cur_time < end_time) {
-	/* fprintf(stderr, "within loop\n"); */
-	/* fprintf(stderr,"fdsf"); */
+
+
 	print_remaining_time(difftime(end_time, cur_time));
 	sleep(1);
 	cur_time=time(NULL);
