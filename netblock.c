@@ -4,6 +4,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdbool.h>
+#include <string.h>
+
 
 static char* PRINTER = "192.168.1.15";
 static int firewall_rule;
@@ -26,11 +28,19 @@ bool delete_firewall_rule(void) {
 }
 
 
-void ctrl_c_handler(int sig) {
+void sig_int_term_quit_handler(int sig) {
   system("sudo -k");
   printf("\n");
   if(delete_firewall_rule()) {
-	printf("Received SIGINT. Internet restored.\n");
+	switch(sig) {
+	case SIGINT: printf("Received SIGINT. ");
+	             break;
+	case SIGTERM: printf("Received SIGTERM. ");
+	             break;
+	case SIGQUIT: printf("Received SIGQUIT. ");
+	             break;
+	}
+	printf("Internet restored.\n");
 	remove(filelock_name);
 	exit(1);
   }
@@ -82,7 +92,7 @@ char* format_time(double total_secs, char dst[8+1]) {
 }
 
 
-bool netblock_active() {
+bool is_active() {
   /* char command[100]; */
   /* sprintf(command, "sudo ipfw list | grep \"deny tcp from not %s to not %s\" &> /dev/null", PRINTER, PRINTER); */
   /* return !system(command);  */
@@ -109,28 +119,41 @@ void print_remaining_time(double rem_time) {
 
 int main(int argc, char* argv[]) {
 
-  if(netblock_active()) {
-	printf("netblock already active. Aborting.\n");
-	exit(1);
-  }
-
-  fopen(filelock_name, "w+");
-  time_t start_time = time(NULL);
-
+  
   long interval_secs;
-
-  if (argc == 1)
-	interval_secs = 8*60*60;
+  if (argc == 1) 
+	interval_secs = 8 * 60 * 60;
   else {
-	long interval; 
-	sscanf(argv[1], "%ld", &interval);
-	interval_secs = interval*60*60;
+	if(strcmp(argv[1], "-i") == 0  ||  strcmp(argv[1], "--info") == 0) {
+	  if(is_active())
+		printf("netblock active.\n");
+	  else
+		printf("netblock NOT active.\n");
+	  return 0;
+	}
+
+	if(is_active()) {
+	  printf("netblock already active. Aborting.\n");
+	  exit(1);
+	}
+
+	long hours;
+	sscanf(argv[1], "%ld", &hours);
+	interval_secs = hours * 60 * 60;
   }
 
+  
+  fopen(filelock_name, "w+");
+
+
+  
 
   signal(SIGTSTP, ctrl_z_handler);
-  signal(SIGINT, ctrl_c_handler);
+  signal(SIGINT, sig_int_term_quit_handler);
+  signal(SIGTERM, sig_int_term_quit_handler);
+  signal(SIGQUIT, sig_int_term_quit_handler);
 
+  time_t start_time = time(NULL);
   time_t end_time = start_time + interval_secs;
   time_t cur_time = start_time;
 
