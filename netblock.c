@@ -80,7 +80,7 @@ void print_remaining_time(double rem_time) {
   fflush(stdout);
   system("tput sgr0");
   system("tput smso");
-  printf("%s hours\r", format_time(rem_time, hour));
+  printf("%s hours", format_time(rem_time, hour));
   fflush(stdout);
   system("tput rmso");
 
