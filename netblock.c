@@ -211,6 +211,7 @@ int main(int argc, char* argv[]) {
 	}
 	
 	print_remaining_time(0);
+	delete_firewall_rule();
 	printf("\nInternet connection restored.\n");
 	remove(filelock_name);
 	return 0;
