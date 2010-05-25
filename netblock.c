@@ -7,6 +7,11 @@
 #include <string.h>
 
 
+#define BOLD     "\033[1m"
+#define OFFBOLD  "\033[0m"
+
+
+
 static char* PRINTER = "192.168.1.15";
 static int firewall_rule;
 static char* filelock_name = "/tmp/netblock.lock"; // /tmp/* are deleted 
@@ -30,6 +35,8 @@ bool delete_firewall_rule(void) {
 }
 
 
+void print_header(void);
+
 void sig_int_term_quit_handler(int sig) {
 	system("sudo -k");
 	printf("\n");
@@ -48,8 +55,9 @@ void sig_int_term_quit_handler(int sig) {
 	}
 	else {
 		/* system("tput clear"); */
-		system("tput rc");
-		system("tput ed");
+		/* system("tput rc"); */
+		/* system("tput ed"); */
+	  print_header();
 	}
 }
 
@@ -66,25 +74,30 @@ void ctrl_z_handler(int sig) {
 		raise(SIGTSTP);
 	} else {
 		/* system("tput clear"); */
-		system("tput rc");
-		system("tput ed");
+		/* system("tput rc"); */
+		/* system("tput ed"); */
+	  print_header();
 	}
 }
+
+
 
 void sigcont_handler(int sig) {
 	
 	if(add_firewall_rule()) {
 		/* system("clear"); */
-		system("tput rc");
-		system("tput ed");
-		signal(SIGTSTP, ctrl_z_handler);
-		signal(SIGCONT, SIG_DFL);
-		raise(SIGCONT);
+	  print_header();
+	  /* system("tput sc"); */
+	  /* system("tput ed"); */
+	  signal(SIGTSTP, ctrl_z_handler);
+	  signal(SIGCONT, SIG_DFL);
+	  raise(SIGCONT);
 	} else {
 		/* system("tput clear"); */
 
-	  system("tput rc");
-	  system("tput ed");
+	  /* system("tput rc"); */
+	  /* system("tput ed"); */
+	  print_header();
 	}
 	
 }
@@ -125,6 +138,20 @@ void print_remaining_time(double rem_time) {
 	
 }
 
+time_t start_time;
+time_t end_time;
+
+
+void print_header() {
+  system("tput clear");
+  printf("\t\t" BOLD "%8s" OFFBOLD "\n\t\t%8s\n\n", "NETBLOCK", "========");
+  printf("Start at:\t" BOLD "%s" OFFBOLD, ctime(&start_time));
+  printf("Finish at:\t" BOLD "%s\n" OFFBOLD, ctime(&end_time));
+  fflush(stdout);
+  
+}
+
+
 
 int main(int argc, char* argv[]) {
 	
@@ -162,8 +189,8 @@ int main(int argc, char* argv[]) {
 	signal(SIGTERM, sig_int_term_quit_handler);
 	signal(SIGQUIT, sig_int_term_quit_handler);
 	
-	time_t start_time = time(NULL);
-	time_t end_time = start_time + interval_secs;
+	start_time = time(NULL);
+	end_time = start_time + interval_secs;
 	time_t cur_time = start_time;
 
 	
@@ -171,11 +198,7 @@ int main(int argc, char* argv[]) {
 		exit(1);
 	
 	
-	system("clear");
-	printf("\t\t\033[1m%8s\033[0m\n\t\t%8s\n\n", "NETBLOCK", "========");
-	printf("Start at:\t\033[1m%s\033[0m", ctime(&start_time));
-	printf("Finish at:\t\033[1m%s\n\033[0m", ctime(&end_time));
-	fflush(stdout);
+	print_header();
 	system("tput sc");
 	
 	while(cur_time < end_time) {
