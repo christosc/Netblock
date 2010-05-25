@@ -47,8 +47,9 @@ void sig_int_term_quit_handler(int sig) {
 		exit(1);
 	}
 	else {
-		system("tput clear");
-		system("tput sc");
+		/* system("tput clear"); */
+		system("tput rc");
+		system("tput ed");
 	}
 }
 
@@ -64,22 +65,26 @@ void ctrl_z_handler(int sig) {
 		printf("Received SIGTSTP. Temporarily restoring Internet.\n");
 		raise(SIGTSTP);
 	} else {
-		system("tput clear");
-		system("tput sc");
+		/* system("tput clear"); */
+		system("tput rc");
+		system("tput ed");
 	}
 }
 
 void sigcont_handler(int sig) {
 	
 	if(add_firewall_rule()) {
-		system("clear");
-		system("tput sc");
+		/* system("clear"); */
+		system("tput rc");
+		system("tput ed");
 		signal(SIGTSTP, ctrl_z_handler);
 		signal(SIGCONT, SIG_DFL);
 		raise(SIGCONT);
 	} else {
-		system("tput clear");
-		system("tput sc");
+		/* system("tput clear"); */
+
+	  system("tput rc");
+	  system("tput ed");
 	}
 	
 }
@@ -109,10 +114,10 @@ void print_remaining_time(double rem_time) {
 	char hour[8+1];
 	
 	system("tput rc");
-	system("tput bold");
+	/* system("tput bold"); */
 	printf("Time remaining to restore Internet: ");
 	fflush(stdout);
-	system("tput sgr0");
+	/* system("tput sgr0"); */
 	system("tput smso");
 	printf("%s hour(s)", format_time(rem_time, hour));
 	fflush(stdout);
@@ -160,13 +165,19 @@ int main(int argc, char* argv[]) {
 	time_t start_time = time(NULL);
 	time_t end_time = start_time + interval_secs;
 	time_t cur_time = start_time;
+
 	
 	if(!add_firewall_rule())
 		exit(1);
 	
 	
 	system("clear");
+	printf("\t\t\033[1m%8s\033[0m\n\t\t%8s\n\n", "NETBLOCK", "========");
+	printf("Start at:\t\033[1m%s\033[0m", ctime(&start_time));
+	printf("Finish at:\t\033[1m%s\n\033[0m", ctime(&end_time));
+	fflush(stdout);
 	system("tput sc");
+	
 	while(cur_time < end_time) {
 		
 		
