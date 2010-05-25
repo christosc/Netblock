@@ -89,7 +89,7 @@ char* format_time(double total_secs, char dst[8+1]) {
 	int hours = (int)total_secs / 3600;
 	int mins  = ((int)total_secs % 3600) / 60;
 	int secs  = ((int)total_secs - ((int)hours*3600 + mins*60));
-	sprintf(dst,"%2d:%2d:%2d", hours, mins, secs);
+	sprintf(dst,"%2d:%02d:%02d", hours, mins, secs);
 	return dst;
 }
 
@@ -114,7 +114,7 @@ void print_remaining_time(double rem_time) {
 	fflush(stdout);
 	system("tput sgr0");
 	system("tput smso");
-	printf("%s hours", format_time(rem_time, hour));
+	printf("%s hour(s)", format_time(rem_time, hour));
 	fflush(stdout);
 	system("tput rmso");
 	
