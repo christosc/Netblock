@@ -87,7 +87,7 @@ void sigcont_handler(int sig) {
 	if(add_firewall_rule()) {
 		/* system("clear"); */
 	  print_header();
-	  /* system("tput sc"); */
+	  system("tput sc");
 	  /* system("tput ed"); */
 	  signal(SIGTSTP, ctrl_z_handler);
 	  signal(SIGCONT, SIG_DFL);
@@ -98,6 +98,7 @@ void sigcont_handler(int sig) {
 	  /* system("tput rc"); */
 	  /* system("tput ed"); */
 	  print_header();
+	  
 	}
 	
 }
@@ -143,7 +144,7 @@ time_t end_time;
 
 
 void print_header() {
-  system("tput clear");
+  system("clear");
   printf("\t\t" BOLD "%8s" OFFBOLD "\n\t\t%8s\n\n", "NETBLOCK", "========");
   printf("Start at:\t" BOLD "%s" OFFBOLD, ctime(&start_time));
   printf("Finish at:\t" BOLD "%s\n" OFFBOLD, ctime(&end_time));
