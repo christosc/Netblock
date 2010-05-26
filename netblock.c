@@ -153,6 +153,12 @@ void print_header() {
 }
 
 
+bool firewall_rule_exists(void) {
+  char command[100];
+  sprintf(command, "sudo ipfw list | grep \"deny tcp from not %s to not %s\" &>/dev/null", PRINTER, PRINTER);
+  return (system(command) == 0);
+}
+
 
 int main(int argc, char* argv[]) {
 	
@@ -162,11 +168,19 @@ int main(int argc, char* argv[]) {
 		interval_secs = 8 * 60 * 60;
 	else {
 		if(strcmp(argv[1], "-i") == 0  ||  strcmp(argv[1], "--info") == 0) {
-			if(is_active())
-				printf("netblock active.\n");
-			else
-				printf("netblock NOT active.\n");
-			return 0;
+		  if(is_active()) {
+			printf("netblock active.\n");
+			
+		  }
+		  else
+			printf("netblock NOT active.\n");
+
+		  if(firewall_rule_exists()) {
+			printf("Firewall rule blocking Internet connection exists.\n");
+		  }
+		  else
+			printf("No firewall rule blocking Internet connection exists.\n");
+		  return 0;
 		}
 		
 		if(is_active()) {
@@ -212,8 +226,13 @@ int main(int argc, char* argv[]) {
 	
 	print_remaining_time(0);
 	printf("\n");
-	delete_firewall_rule();
-	printf("\nInternet connection restored.\n");
+	if(delete_firewall_rule()) {
+	  printf("Internet connection restored.\n");
+	  
+	} else {
+	  printf("Internet connection was NOT restored.\n");
+	  
+	}
 	remove(filelock_name);
 	return 0;
 }
