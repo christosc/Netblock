@@ -192,13 +192,13 @@ int main(int argc, char* argv[]) {
 			if(firewall_rule_active)
 			  printf("Firewall rule blocking Internet connection exists.\n");
 			else
-			  printf("No firewall rule blocking Internet connection exists.\n");
+			  printf("No firewall rule exists blocking Internet connection.\n");
 		  } else {
 			printf("netblock NOT active.\n");
 			if(firewall_rule_active)
 			  printf("Firewall rule blocking Internet connection exists.\n");
 			else
-			  printf("No firewall rule blocking Internet connection exists.\n");
+			  printf("No firewall rule exists blocking Internet connection.\n");
 		  }
 		  return 0;
 		}
