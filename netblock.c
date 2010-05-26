@@ -166,20 +166,40 @@ int main(int argc, char* argv[]) {
 	long interval_secs;
 	if (argc == 1) 
 		interval_secs = 8 * 60 * 60;
-	else {
+	else if(argc == 2) {
 		if(strcmp(argv[1], "-i") == 0  ||  strcmp(argv[1], "--info") == 0) {
+		  bool block_active;
+		  bool firewall_rule_active;
+		  
 		  if(is_active()) {
-			printf("netblock active.\n");
+			block_active = true;
 			
 		  }
-		  else
-			printf("netblock NOT active.\n");
-
-		  if(firewall_rule_exists()) {
-			printf("Firewall rule blocking Internet connection exists.\n");
+		  else {
+			block_active = false;
 		  }
-		  else
-			printf("No firewall rule blocking Internet connection exists.\n");
+		  
+		  if(firewall_rule_exists()) {
+			firewall_rule_active = true;
+		  }
+		  else {
+			firewall_rule_active = false;
+		  }
+
+
+		  if(block_active) {
+			printf("netblock active.\n");
+			if(firewall_rule_active)
+			  printf("Firewall rule blocking Internet connection exists.\n");
+			else
+			  printf("No firewall rule blocking Internet connection exists.\n");
+		  } else {
+			printf("netblock NOT active.\n");
+			if(firewall_rule_active)
+			  printf("Firewall rule blocking Internet connection exists.\n");
+			else
+			  printf("No firewall rule blocking Internet connection exists.\n");
+		  }
 		  return 0;
 		}
 		
@@ -191,6 +211,9 @@ int main(int argc, char* argv[]) {
 		long hours;
 		sscanf(argv[1], "%ld", &hours);
 		interval_secs = hours * 60 * 60;
+	} else {
+	  printf("Usage: netblock [hours]");
+	  
 	}
 	
 	
