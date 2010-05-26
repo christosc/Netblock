@@ -167,7 +167,7 @@ int main(int argc, char* argv[]) {
 	if (argc == 1) 
 		interval_secs = 8 * 60 * 60;
 	else if(argc == 2) {
-		if(strcmp(argv[1], "-i") == 0  ||  strcmp(argv[1], "--info") == 0) {
+		if(strcmp(argv[1], "-i") == 0  ||  strcmp(argv[1], "--info") == 0 || strcmp(argv[1], "-?") == 0) {
 		  bool block_active;
 		  bool firewall_rule_active;
 		  
