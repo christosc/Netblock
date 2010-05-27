@@ -187,51 +187,39 @@ int main(int argc, char* argv[]) {
 	if (argc == 1) 
 		interval_secs = 8 * 60 * 60;
 	else if(argc == 2) {
-		if(strcmp(argv[1], "-i") == 0  ||  strcmp(argv[1], "--info") == 0 || strcmp(argv[1], "-?") == 0) {
-		  bool block_active;
-		  bool firewall_rule_active;
-		  
-		  if(is_active()) {
-			block_active = true;
-			
-		  }
-		  else {
-			block_active = false;
-		  }
-		  
-		  if(firewall_rule_exists()) {
-			firewall_rule_active = true;
-		  }
-		  else {
-			firewall_rule_active = false;
-		  }
+	  bool netblock_active = is_active() ? true : false;
+	  
+	  if(strcmp(argv[1], "-i") == 0  ||  strcmp(argv[1], "--info") == 0 || strcmp(argv[1], "-?") == 0) {
 
-
-		  if(block_active) {
-			printf("netblock active.\n");
-			if(firewall_rule_active)
-			  printf("Firewall rule blocking Internet connection exists.\n");
-			else
-			  printf("No firewall rule exists blocking Internet connection.\n");
-		  } else {
-			printf("netblock NOT active.\n");
-			if(firewall_rule_active)
-			  printf("Firewall rule blocking Internet connection exists.\n");
-			else
-			  printf("No firewall rule exists blocking Internet connection.\n");
-		  }
-		  return 0;
-		}
+		bool firewall_rule_active = firewall_rule_exists() ? true : false;
 		
-		if(is_active()) {
-			printf("netblock already active. Aborting.\n");
-			exit(1);
+		if(netblock_active) {
+		  printf("netblock active.\n");
+		  if(firewall_rule_active)
+			printf("Firewall rule blocking Internet connection exists.\n");
+		  else
+			printf("No firewall rule exists blocking Internet connection.\n");
 		}
-		
-		long hours;
-		sscanf(argv[1], "%ld", &hours);
-		interval_secs = hours * 60 * 60;
-	} else {
+		else {
+		  printf("netblock NOT active.\n");
+		  if(firewall_rule_active)
+			printf("Firewall rule blocking Internet connection exists.\n");
+		  else
+			printf("No firewall rule exists blocking Internet connection.\n");
+		}
+		return 0;
+	  }
+	  
+	  if(netblock_active) {
+		printf("netblock already active. Aborting.\n");
+		exit(1);
+	  }
+	  
+	  long hours;
+	  sscanf(argv[1], "%ld", &hours);
+	  interval_secs = hours * 60 * 60;
+	}
+	else {
 	  printf("Usage: sudo netblock [-i | --info | -? | hours]");
 	  
 	}
