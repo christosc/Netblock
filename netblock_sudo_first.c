@@ -38,7 +38,7 @@ bool delete_firewall_rule(void) {
 void print_header(void);
 
 void sigint_sigquit_handler(int sig) {
-  printf("\nAre you sure you want to terminate netblock? (yes/no) [no] ");
+  printf("\n\nAre you sure you want to terminate netblock? (yes/no) [no] ");
   char ans[3+1];
   fgets(ans, 4, stdin);
   /* while(ans != '\n' &&  ans != 'y' && ans != 'n') { */
