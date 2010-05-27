@@ -75,13 +75,7 @@ void sigint_sigquit_handler(int sig) {
 
 void sigterm_handler(int sig) {
   delete_firewall_rule();
-  switch(sig) {
-  case SIGTERM: printf("Received SIGTERM. ");
-	break;
-  case SIGQUIT: printf("Received SIGQUIT. ");
-	break;
-  }
-  printf("\nInternet restored.\n");
+  printf("\nReceived SIGTERM. Internet restored.\n");
   remove(filelock_name);
   exit(1);
   
