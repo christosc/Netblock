@@ -37,28 +37,54 @@ bool delete_firewall_rule(void) {
 
 void print_header(void);
 
-void sig_int_term_quit_handler(int sig) {
+void sigint_sigquit_handler(int sig) {
+  printf("\nAre you sure you want to terminate netblock? (yes/no) [no] ");
+  char ans[3+1];
+  fgets(ans, 4, stdin);
+  /* while(ans != '\n' &&  ans != 'y' && ans != 'n') { */
+  /* 	printf("Are you sure you want to terminate netblock (y/n)? [n] "); */
+  /* 	charRead = scanf("%c", &ans); */
+  /* } */
+  
+  /* if(ans == '\n' || ans == 'n') { */
+  /* 	print_header(); */
+  /* 	return; */
+  /* } */
+  
+  if(strcasecmp(ans, "yes") == 0) {
+	delete_firewall_rule();
+	switch(sig) {
+	case SIGINT: printf("Received SIGINT. ");
+	  break;
+	case SIGQUIT: printf("Received SIGQUIT. ");
+	  break;
+	}
+	printf("Internet restored.\n");
+	remove(filelock_name);
+	exit(1);
+  }
+  else {
+	/* system("tput clear"); */
+	/* system("tput rc"); */
+	/* system("tput ed"); */
+	print_header();
+    
+  }
+}
 
-	printf("\n");
-	if(delete_firewall_rule()) {
-		switch(sig) {
-			case SIGINT: printf("Received SIGINT. ");
-				break;
-			case SIGTERM: printf("Received SIGTERM. ");
-				break;
-			case SIGQUIT: printf("Received SIGQUIT. ");
-				break;
-		}
-		printf("Internet restored.\n");
-		remove(filelock_name);
-		exit(1);
-	}
-	else {
-		/* system("tput clear"); */
-		/* system("tput rc"); */
-		/* system("tput ed"); */
-	  print_header();
-	}
+
+void sigterm_handler(int sig) {
+  delete_firewall_rule();
+  switch(sig) {
+  case SIGTERM: printf("Received SIGTERM. ");
+	break;
+  case SIGQUIT: printf("Received SIGQUIT. ");
+	break;
+  }
+  printf("\nInternet restored.\n");
+  remove(filelock_name);
+  exit(1);
+  
 }
 
 void ctrl_z_handler(int sig);
@@ -223,9 +249,9 @@ int main(int argc, char* argv[]) {
 	
 	
 	signal(SIGTSTP, ctrl_z_handler);
-	signal(SIGINT, sig_int_term_quit_handler);
-	signal(SIGTERM, sig_int_term_quit_handler);
-	signal(SIGQUIT, sig_int_term_quit_handler);
+	signal(SIGINT, sigint_sigquit_handler);
+	signal(SIGTERM, sigterm_handler);
+	signal(SIGQUIT, sigint_sigquit_handler);
 	
 	start_time = time(NULL);
 	end_time = start_time + interval_secs;
