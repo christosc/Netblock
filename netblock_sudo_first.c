@@ -21,8 +21,8 @@ bool add_firewall_rule(void) {
 	srand(time(NULL));
 	firewall_rule = (rand() % 32000) + 1;
 	char command[100];
-	sprintf(command, " ipfw -q add %d deny tcp from not %s to not %s", 
-			firewall_rule, PRINTER, PRINTER);
+	sprintf(command, " ipfw -q add %d deny tcp from any to any via en0", 
+			firewall_rule);
 	return (system(command) == 0); // In Unix 0 == success
 	
 }
@@ -175,38 +175,47 @@ void print_header() {
 
 bool firewall_rule_exists(void) {
   char command[100];
-  sprintf(command, " ipfw list | grep \"deny tcp from not %s to not %s\" &>/dev/null", PRINTER, PRINTER);
+  sprintf(command, " ipfw list | grep \"deny tcp from any to any\" &>/dev/null");
   return (system(command) == 0);
 }
 
 
 int main(int argc, char* argv[]) {
+
+  if(getuid() != 0) {
+	fprintf(stderr, "netblock: Operation not permitted.\n");
+	exit(1);
+  }
+
+  bool netblock_active = is_active() ? true : false;
+  long interval_secs;
+  if (argc == 1) {
+	if(netblock_active) {
+	  printf("netblock already active. Aborting.\n");
+	  exit(1);
+	}
+
+	interval_secs = 8 * 60 * 60;
+  }
 	
+  else if(argc == 2) {
 	
-	long interval_secs;
-	if (argc == 1) 
-		interval_secs = 8 * 60 * 60;
-	else if(argc == 2) {
-	  bool netblock_active = is_active() ? true : false;
 	  
 	  if(strcmp(argv[1], "-i") == 0  ||  strcmp(argv[1], "--info") == 0 || strcmp(argv[1], "-?") == 0) {
 
-		bool firewall_rule_active = firewall_rule_exists() ? true : false;
+		int firewall_rule_active = firewall_rule_exists();
 		
-		if(netblock_active) {
+		
+		if(netblock_active) 
 		  printf("netblock active.\n");
-		  if(firewall_rule_active)
-			printf("Firewall rule blocking Internet connection exists.\n");
-		  else
-			printf("No firewall rule exists blocking Internet connection.\n");
-		}
-		else {
+		else
 		  printf("netblock NOT active.\n");
-		  if(firewall_rule_active)
-			printf("Firewall rule blocking Internet connection exists.\n");
-		  else
-			printf("No firewall rule exists blocking Internet connection.\n");
-		}
+		
+		if(firewall_rule_active)
+		  printf("Firewall rule blocking Internet connection exists.\n");
+		else
+		  printf("No firewall rule exists blocking Internet connection.\n");
+				
 		return 0;
 	  }
 	  
@@ -219,52 +228,53 @@ int main(int argc, char* argv[]) {
 	  sscanf(argv[1], "%ld", &hours);
 	  interval_secs = hours * 60 * 60;
 	}
-	else {
-	  printf("Usage: sudo netblock [-i | --info | -? | hours]");
-	  
-	}
+  else {
+	printf("Usage: sudo netblock [-i | --info | -? | hours]");
+	
+  }
 	
 	
-	fopen(filelock_name, "w+");
+  fopen(filelock_name, "w+");
 	
 	
 	
 	
-	signal(SIGTSTP, ctrl_z_handler);
-	signal(SIGINT, sigint_sigquit_handler);
-	signal(SIGTERM, sigterm_handler);
-	signal(SIGQUIT, sigint_sigquit_handler);
+  signal(SIGTSTP, ctrl_z_handler);
+  signal(SIGINT, sigint_sigquit_handler);
+  signal(SIGTERM, sigterm_handler);
+  signal(SIGQUIT, sigint_sigquit_handler);
+  
+  start_time = time(NULL);
+  end_time = start_time + interval_secs;
+  time_t cur_time = start_time;
+  
 	
-	start_time = time(NULL);
-	end_time = start_time + interval_secs;
-	time_t cur_time = start_time;
-
+  if(!add_firewall_rule())
+	exit(1);
+  
+  
+  print_header();
+  system("tput sc");
+  
+  while(cur_time < end_time) {
 	
-	if(!add_firewall_rule())
-		exit(1);
-	
-	
-	print_header();
-	system("tput sc");
-	
-	while(cur_time < end_time) {
 		
-		
-		print_remaining_time(difftime(end_time, cur_time));
-		sleep(1);
-		cur_time=time(NULL);
-	}
+	print_remaining_time(difftime(end_time, cur_time));
+	sleep(1);
+	cur_time=time(NULL);
+  }
+  
+  print_remaining_time(0);
+  printf("\n");
+  if(delete_firewall_rule()) {
+	printf("Internet connection restored.\n");
 	
-	print_remaining_time(0);
-	printf("\n");
-	if(delete_firewall_rule()) {
-	  printf("Internet connection restored.\n");
-	  
-	} else {
-	  printf("Internet connection was NOT restored.\n");
-	  
-	}
-	remove(filelock_name);
-	return 0;
+  }
+  else {
+	printf("Internet connection was NOT restored.\n");
+	
+  }
+  remove(filelock_name);
+  return 0;
 }
 
