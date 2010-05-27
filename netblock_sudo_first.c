@@ -5,17 +5,19 @@
 #include <unistd.h>
 #include <stdbool.h>
 #include <string.h>
-
+#include <libgen.h>
+#include <ctype.h>
 
 #define BOLD     "\033[1m"
 #define OFFBOLD  "\033[0m"
 
 
 
-static char* PRINTER = "192.168.1.15";
+
 static int firewall_rule;
 static char* filelock_name = "/tmp/netblock.lock"; // /tmp/* are deleted 
 												   // automatically upon reboot
+static const char* program;
 
 bool add_firewall_rule(void) {
 	srand(time(NULL));
@@ -86,7 +88,7 @@ void sigcont_handler(int sig);
 
 
 void ctrl_z_handler(int sig) {
-	printf("\n");
+	printf("\n\n");
 	if(delete_firewall_rule()) {
 		signal(SIGTSTP, SIG_DFL);
 		signal(SIGCONT, sigcont_handler);
@@ -165,7 +167,16 @@ time_t end_time;
 
 void print_header() {
   system("clear");
-  printf("\t\t" BOLD "%8s" OFFBOLD "\n\t\t%8s\n\n", "NETBLOCK", "========");
+  int progNameLen = strlen(program);
+
+  char capProgram[progNameLen+1];
+  strcpy(capProgram, program);
+  capProgram[0] = toupper(capProgram[0]);
+ 
+  char underline[progNameLen+1];
+  memset(underline, '=', progNameLen);
+  underline[progNameLen] = '\0';
+  printf("\t\t" BOLD "%s" OFFBOLD "\n\t\t%s\n\n", capProgram, underline);
   printf("Start at:\t" BOLD "%s" OFFBOLD, ctime(&start_time));
   printf("Finish at:\t" BOLD "%s\n" OFFBOLD, ctime(&end_time));
   fflush(stdout);
@@ -180,18 +191,23 @@ bool firewall_rule_exists(void) {
 }
 
 
+
+
 int main(int argc, char* argv[]) {
+  program = basename(argv[0]);
+
 
   if(getuid() != 0) {
-	fprintf(stderr, "netblock: Operation not permitted.\n");
+	fprintf(stderr, "%s: Operation not permitted.\n", program);
 	exit(1);
   }
 
+  
   bool netblock_active = is_active() ? true : false;
   long interval_secs;
   if (argc == 1) {
 	if(netblock_active) {
-	  printf("netblock already active. Aborting.\n");
+	  printf("%s already active. Aborting.\n", program);
 	  exit(1);
 	}
 
@@ -207,9 +223,9 @@ int main(int argc, char* argv[]) {
 		
 		
 		if(netblock_active) 
-		  printf("netblock active.\n");
+		  printf("%s active.\n", program);
 		else
-		  printf("netblock NOT active.\n");
+		  printf("%s NOT active.\n", program);
 		
 		if(firewall_rule_active)
 		  printf("Firewall rule blocking Internet connection exists.\n");
@@ -220,7 +236,7 @@ int main(int argc, char* argv[]) {
 	  }
 	  
 	  if(netblock_active) {
-		printf("netblock already active. Aborting.\n");
+		printf("%s already active. Aborting.\n", program);
 		exit(1);
 	  }
 	  
@@ -229,7 +245,7 @@ int main(int argc, char* argv[]) {
 	  interval_secs = hours * 60 * 60;
 	}
   else {
-	printf("Usage: sudo netblock [-i | --info | -? | hours]");
+	printf("Usage: sudo %s [-i | --info | -? | hours]", program);
 	
   }
 	
