@@ -38,7 +38,7 @@ bool delete_firewall_rule(void) {
 void print_header(void);
 
 void sig_int_term_quit_handler(int sig) {
-	system(" -k");
+
 	printf("\n");
 	if(delete_firewall_rule()) {
 		switch(sig) {
