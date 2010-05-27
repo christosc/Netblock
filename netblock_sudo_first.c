@@ -212,7 +212,7 @@ int main(int argc, char* argv[]) {
 		sscanf(argv[1], "%ld", &hours);
 		interval_secs = hours * 60 * 60;
 	} else {
-	  printf("Usage: sudo netblock [-i | --info | hours]");
+	  printf("Usage: sudo netblock [-i | --info | -? | hours]");
 	  
 	}
 	
