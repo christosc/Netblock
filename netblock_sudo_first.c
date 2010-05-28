@@ -18,6 +18,8 @@ static int firewall_rule;
 static char* filelock_name = "/tmp/netblock.lock"; // /tmp/* are deleted 
 												   // automatically upon reboot
 static const char* program;
+static const int default_hours = 4;
+
 
 bool add_firewall_rule(void) {
 	srand(time(NULL));
@@ -211,7 +213,7 @@ int main(int argc, char* argv[]) {
 	  exit(1);
 	}
 
-	interval_secs = 8 * 60 * 60;
+	interval_secs = default_hours * 60 * 60;
   }
 	
   else if(argc == 2) {
