@@ -71,7 +71,9 @@ void sigint_sigquit_handler(int sig) {
 	/* system("tput clear"); */
 	/* system("tput rc"); */
 	/* system("tput ed"); */
+#ifndef DEBUG
 	print_header();
+#endif
     
   }
 }
@@ -85,11 +87,11 @@ void sigterm_handler(int sig) {
   
 }
 
-void ctrl_z_handler(int sig);
+void sigtstp_handler(int sig);
 void sigcont_handler(int sig);
 
 
-void ctrl_z_handler(int sig) {
+void sigtstp_handler(int sig) {
 	printf("\n\n");
 	if(delete_firewall_rule()) {
 		signal(SIGTSTP, SIG_DFL);
@@ -100,7 +102,9 @@ void ctrl_z_handler(int sig) {
 		/* system("tput clear"); */
 		/* system("tput rc"); */
 		/* system("tput ed"); */
+#ifndef DEBUG
 	  print_header();
+#endif
 	}
 }
 
@@ -113,7 +117,7 @@ void sigcont_handler(int sig) {
 	  print_header();
 	  system("tput sc");
 	  /* system("tput ed"); */
-	  signal(SIGTSTP, ctrl_z_handler);
+	  signal(SIGTSTP, sigtstp_handler);
 	  signal(SIGCONT, SIG_DFL);
 	  raise(SIGCONT);
 	} else {
@@ -121,7 +125,9 @@ void sigcont_handler(int sig) {
 
 	  /* system("tput rc"); */
 	  /* system("tput ed"); */
+#ifndef DEBUG
 	  print_header();
+#endif
 	  
 	}
 	
@@ -150,8 +156,9 @@ bool is_active() {
 
 void print_remaining_time(double rem_time) {
 	char hour[8+1];
-	
+#ifndef DEBUG	
 	system("tput rc");
+#endif
 	/* system("tput bold"); */
 	printf("Time remaining to restore Internet: ");
 	fflush(stdout);
@@ -168,7 +175,9 @@ time_t end_time;
 
 
 void print_header() {
+#ifndef DEBUG
   system("clear");
+#endif
   int progNameLen = strlen(program);
 
   char capProgram[progNameLen+1];
@@ -198,6 +207,10 @@ bool firewall_rule_exists(void) {
 int main(int argc, char* argv[]) {
   program = basename(argv[0]);
 
+#ifdef DEBUG
+  printf("Code in DEBUG reached!\n");
+  fflush(stdout);
+#endif
 
   if(getuid() != 0) {
 	fprintf(stderr, "%s: Operation not permitted.\n", program);
@@ -257,7 +270,7 @@ int main(int argc, char* argv[]) {
 	
 	
 	
-  signal(SIGTSTP, ctrl_z_handler);
+  signal(SIGTSTP, sigtstp_handler);
   signal(SIGINT, sigint_sigquit_handler);
   signal(SIGTERM, sigterm_handler);
   signal(SIGQUIT, sigint_sigquit_handler);
@@ -272,8 +285,11 @@ int main(int argc, char* argv[]) {
   
   
   print_header();
+#ifndef DEBUG
+  printf("Going into not DEBUG code\n");
+  fflush(stdout);
   system("tput sc");
-  
+#endif
   while(cur_time < end_time) {
 	
 		
