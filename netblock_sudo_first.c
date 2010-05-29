@@ -281,11 +281,7 @@ int main(int argc, char* argv[]) {
   
   
   print_header();
-#ifndef DEBUG
-  printf("Going into not DEBUG code\n");
-  fflush(stdout);
   system("tput sc");
-#endif
   while(cur_time < end_time) {
 	
 		
