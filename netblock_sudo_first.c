@@ -207,11 +207,7 @@ bool firewall_rule_exists(void) {
 int main(int argc, char* argv[]) {
   program = basename(argv[0]);
 
-#ifdef DEBUG
-  printf("Code in DEBUG reached!\n");
-  fflush(stdout);
-#endif
-
+  
   if(getuid() != 0) {
 	fprintf(stderr, "%s: Operation not permitted.\n", program);
 	exit(1);
