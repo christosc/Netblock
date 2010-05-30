@@ -19,7 +19,8 @@ static char* filelock_name = "/tmp/netblock.lock"; // /tmp/* are deleted
 												   // automatically upon reboot
 static const char* program;
 static const int default_hours = 8;
-
+static int PID;
+static bool tstp_received = false;
 
 bool add_firewall_rule(void) {
 	srand(time(NULL));
@@ -88,17 +89,30 @@ void sigterm_handler(int sig) {
 }
 
 void sigtstp_handler(int sig);
-void sigcont_handler(int sig);
+void sigcont_handler(int sig, siginfo_t *si, void* context);
 
 
 void sigtstp_handler(int sig) {
-	printf("\n\n");
-	if(delete_firewall_rule()) {
-		signal(SIGTSTP, SIG_DFL);
-		signal(SIGCONT, sigcont_handler);
-		printf("Received SIGTSTP. Temporarily restoring Internet.\n");
-		raise(SIGTSTP);
-	} else {
+  /* sigset_t mask, oldmask; */
+
+  /* sigemptyset(&mask); */
+  /* sigaddset(&mask, SIGTSTP); */
+  /* sigaddset(&mask, SIGCONT); */
+  /* sigprocmask (SIG_BLOCK, &mask, &oldmask); // Ἀπὸ τοῦδε βάζε εἰς τὴν ἀναμονὴν τὰ ὅποια SIGTSTP καὶ SIGCONT */
+  tstp_received = true;
+  printf("\n\n");
+  if(delete_firewall_rule()) { 
+
+
+	/* signal(SIGTSTP, SIG_DFL); */
+	/* signal(SIGCONT, sigcont_handler); */
+	printf("Received SIGTSTP. Temporarily restoring Internet.\n");
+	/* raise(SIGTSTP); */
+	/* while(!sigcont_interrupt) */
+	/*   sigsuspend(&oldmask); */
+	kill(PID, SIGSTOP); // στεῖλον SIGSTOP τῇ παρούσῃ διεργασίᾳ
+		
+  } else { // Ἢ δὲν ὑπῆρχεν ὁ κανὼν ipfw ἢ δὲν ἐδόθη σωστὸ σύνθημα εἰς τὸ sudo
 		/* system("tput clear"); */
 		/* system("tput rc"); */
 		/* system("tput ed"); */
@@ -106,31 +120,56 @@ void sigtstp_handler(int sig) {
 	  print_header();
 #endif
 	}
+  /* sigcont_action.sa_flags &= ~SA_SIGINFO; */
+  /* sigcont_action.sa_handler = SIG_DFL; */
+  /* sigaction(SIGCONT, &sigcont_action, NULL); */
+  /* sigprocmask(SIG_UNBLOCK, &mask, NULL); */
 }
 
 
 
-void sigcont_handler(int sig) {
-	
-	if(add_firewall_rule()) {
-		/* system("clear"); */
-	  print_header();
-	  system("tput sc");
-	  /* system("tput ed"); */
-	  signal(SIGTSTP, sigtstp_handler);
-	  signal(SIGCONT, SIG_DFL);
-	  raise(SIGCONT);
-	} else {
-		/* system("tput clear"); */
+void sigcont_handler(int sig, siginfo_t *si, void *sc) {
 
-	  /* system("tput rc"); */
-	  /* system("tput ed"); */
+  /* sigset_t pendsigs; */
+  /* sigemptyset(&pendsigs); */
+  /* sigpending(&pendsigs); */
+
+#ifdef DEBUG  
+  printf("This is %s. I reveived signal %d, si_uid = %d, si_code = %d, si_errno = %d\n", __func__, sig, si->si_uid, si->si_code, si->si_errno);
+  printf("pendsigs = %d\n", pendsigs);
+  fflush(stdout);
+#endif
+  
+  if(si->si_uid != 0/*sigismember(&pendsigs, SIGTERM)*/) {
+	  /* perror("Cannot terminate this background process."); */
+	  kill(PID, SIGSTOP);
+  }
+  
+  if(!tstp_received) return;
+  
+ 
+  if(add_firewall_rule()) {
+	/* system("clear"); */
 #ifndef DEBUG
-	  print_header();
+	print_header();
+	system("tput sc");
+#endif
+	/* system("tput ed"); */
+	/* signal(SIGTSTP, sigtstp_handler); */
+	/* signal(SIGCONT, SIG_DFL); */
+	
+  } else {
+	/* system("tput clear"); */
+	
+	/* system("tput rc"); */
+	/* system("tput ed"); */
+#ifndef DEBUG
+	print_header();
 #endif
 	  
 	}
 	
+  tstp_received = false;
 }
 
 
@@ -206,7 +245,7 @@ bool firewall_rule_exists(void) {
 
 int main(int argc, char* argv[]) {
   program = basename(argv[0]);
-
+  PID = getpid();
   
   if(getuid() != 0) {
 	fprintf(stderr, "%s: Operation not permitted.\n", program);
@@ -263,13 +302,38 @@ int main(int argc, char* argv[]) {
 	
   fopen(filelock_name, "w+");
 	
-	
-	
-	
-  signal(SIGTSTP, sigtstp_handler);
-  signal(SIGINT, sigint_sigquit_handler);
-  signal(SIGTERM, sigterm_handler);
-  signal(SIGQUIT, sigint_sigquit_handler);
+
+  struct sigaction sigtstp_action;
+  sigtstp_action.sa_flags &= ~SA_SIGINFO;
+  sigtstp_action.sa_handler = (void*) sigtstp_handler;
+  sigaction(SIGTSTP, &sigtstp_action, NULL);
+
+
+
+  
+  struct sigaction sigcont_action;
+  sigcont_action.sa_flags = SA_SIGINFO;
+  sigcont_action.sa_sigaction = (void*) sigcont_handler;
+  sigaction(SIGCONT, &sigcont_action, NULL);
+
+
+  struct sigaction sigterm_action;
+  sigterm_action.sa_flags &= ~SA_SIGINFO;
+  sigterm_action.sa_handler = (void*) sigterm_handler;
+  sigaction(SIGTERM, &sigterm_action, NULL);
+
+
+  struct sigaction sigint_sigquit_action;
+  sigint_sigquit_action.sa_flags &= ~SA_SIGINFO;
+  sigint_sigquit_action.sa_handler = (void*) sigint_sigquit_handler;
+  sigaction(SIGINT, &sigint_sigquit_action, NULL);
+  sigaction(SIGQUIT, &sigint_sigquit_action, NULL);
+
+  
+  /* signal(SIGTSTP, sigtstp_handler); */
+  /* signal(SIGINT, sigint_sigquit_handler); */
+  /* signal(SIGTERM, sigterm_handler); */
+  /* signal(SIGQUIT, sigint_sigquit_handler); */
   
   start_time = time(NULL);
   end_time = start_time + interval_secs;
