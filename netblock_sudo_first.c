@@ -110,7 +110,7 @@ void sigtstp_handler(int sig) {
 	/* raise(SIGTSTP); */
 	/* while(!sigcont_interrupt) */
 	/*   sigsuspend(&oldmask); */
-	kill(PID, SIGSTOP); // στεῖλον SIGSTOP τῇ παρούσῃ διεργασίᾳ
+	raise(SIGSTOP); // στεῖλον ἑαυτῇ SIGSTOP
 		
   } else { // Ἢ δὲν ὑπῆρχεν ὁ κανὼν ipfw ἢ δὲν ἐδόθη σωστὸ σύνθημα εἰς τὸ sudo
 		/* system("tput clear"); */
@@ -140,36 +140,38 @@ void sigcont_handler(int sig, siginfo_t *si, void *sc) {
   fflush(stdout);
 #endif
   
-  if(si->si_uid != 0/*sigismember(&pendsigs, SIGTERM)*/) {
-	  /* perror("Cannot terminate this background process."); */
-	  kill(PID, SIGSTOP);
-  }
-  
-  if(!tstp_received) return;
+  /* if(si->si_uid != 0/\*sigismember(&pendsigs, SIGTERM)*\/) { */
+  /* 	  /\* perror("Cannot terminate this background process."); *\/ */
+  /* 	  raise(SIGSTOP); */
+  /* } */
+  /* else { */
+	if(!tstp_received) return;
   
  
-  if(add_firewall_rule()) {
-	/* system("clear"); */
+	if(add_firewall_rule()) {
+	  /* system("clear"); */
 #ifndef DEBUG
-	print_header();
-	system("tput sc");
+	  print_header();
+	  system("tput sc");
 #endif
-	/* system("tput ed"); */
-	/* signal(SIGTSTP, sigtstp_handler); */
-	/* signal(SIGCONT, SIG_DFL); */
+	  /* system("tput ed"); */
+	  /* signal(SIGTSTP, sigtstp_handler); */
+	  /* signal(SIGCONT, SIG_DFL); */
 	
-  } else {
-	/* system("tput clear"); */
-	
-	/* system("tput rc"); */
-	/* system("tput ed"); */
+	} else {
+	  /* system("tput clear"); */
+	  
+	  /* system("tput rc"); */
+	  /* system("tput ed"); */
 #ifndef DEBUG
-	print_header();
+	  print_header();
 #endif
 	  
 	}
+  
 	
-  tstp_received = false;
+	tstp_received = false;
+  
 }
 
 
