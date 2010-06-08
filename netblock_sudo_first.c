@@ -43,9 +43,10 @@ bool delete_firewall_rule(void) {
 void print_header(void);
 
 void sigint_sigquit_handler(int sig) {
-  printf("\n\nAre you sure you want to terminate netblock? (yes/no) [no] ");
-  char ans[3+1];
-  fgets(ans, 4, stdin);
+  if(system("sudo -v") == 0) {
+  /* printf("\n\nAre you sure you want to terminate netblock? (yes/no) [no] "); */
+  /* char ans[3+1]; */
+  /* fgets(ans, 4, stdin); */
   /* while(ans != '\n' &&  ans != 'y' && ans != 'n') { */
   /* 	printf("Are you sure you want to terminate netblock (y/n)? [n] "); */
   /* 	charRead = scanf("%c", &ans); */
@@ -56,7 +57,7 @@ void sigint_sigquit_handler(int sig) {
   /* 	return; */
   /* } */
   
-  if(strcasecmp(ans, "yes") == 0) {
+  /* if(strcasecmp(ans, "yes") == 0) { */
 	delete_firewall_rule();
 	switch(sig) {
 	case SIGINT: printf("Received SIGINT. ");
