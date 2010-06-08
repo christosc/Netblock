@@ -43,6 +43,7 @@ bool delete_firewall_rule(void) {
 void print_header(void);
 
 void sigint_sigquit_handler(int sig) {
+  system("sudo -k");
   if(system("sudo -v") == 0) {
   /* printf("\n\nAre you sure you want to terminate netblock? (yes/no) [no] "); */
   /* char ans[3+1]; */
